@@ -1,0 +1,15 @@
+{
+  "name": "vectrie",
+  "version": "0.0.0",
+  "keywords": [
+    "typescript",
+    "growable array",
+    "immutable",
+    "array",
+    "list",
+    "persistent",
+    "bit partitioned",
+    "vector",
+    "trie"
+  ]
+}
