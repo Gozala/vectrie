@@ -1,5 +1,4 @@
 import * as API from "./api.js"
-import { set } from "./mutable.js"
 function ReadonlyIndexedView() {}
 Object.defineProperties(ReadonlyIndexedView, {
   prototype: {

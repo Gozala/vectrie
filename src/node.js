@@ -1,20 +1,29 @@
 import * as API from "./api.js"
-import { WIDTH, BITS, getChild, setChild } from "./core.js"
+import { WIDTH, BITS } from "./core.js"
 
 /**
  * @template T
  * @returns {API.VectorNode<T>}
  */
-export const empty = () => EMPTY_NODE
+export const emptyBranch = () => EMPTY_BRANCH_NODE
 
 /**
  * @template T
  * @param {API.Edit|null} edit
- * @param {T[]} arr
+ * @param {API.VectorNode<T>[]} children
  * @returns {API.VectorNode<T>}
  */
-export const create = (edit, arr = new Array(WIDTH)) =>
-  new VectorNodeView({ edit, arr })
+export const createBranch = (edit, children = new Array(WIDTH)) =>
+  new BranchNodeView({ edit, children })
+
+/**
+ * @template T
+ * @param {API.Edit|null} edit
+ * @param {T[]} leaves
+ * @returns {API.VectorNode<T>}
+ */
+export const createLeaf = (edit, leaves = new Array(WIDTH)) =>
+  new LeafNodeView({ edit, leaves })
 
 /**
  * @template T
@@ -22,37 +31,25 @@ export const create = (edit, arr = new Array(WIDTH)) =>
  * @param {API.VectorNode<T>} node
  * @returns {API.VectorNode<T>}
  */
-export const asMutable = (edit, node) =>
-  node.edit === edit ? node : clone({ ...node, edit })
+export const asMutableBranch = (edit, node) =>
+  node.edit === edit ? node : createBranch(edit, node.children.slice())
+
+/**
+ * @template T
+ * @param {API.Edit} edit
+ * @param {API.VectorNode<T>} node
+ * @returns {API.VectorNode<T>}
+ */
+export const asMutableLeaf = (edit, node) =>
+  node.edit === edit ? node : createLeaf(edit, node.leaves.slice())
 
 /**
  * @template T
  * @param {API.VectorNode<T>} node
  * @returns {API.VectorNode<T>}
  */
-export const clone = ({ edit, arr }) =>
-  new VectorNodeView({ edit, arr: arr.slice() })
-
-/**
- * @template T
- * @param {API.VectorNode<T>} node
- * @param {number} index
- * @param {T} leaf
- */
-export const setLeaf = (node, index, leaf) => {
-  node.arr[index] = leaf
-}
-
-export { getChild, setChild }
-
-/**
- * @template T
- * @param {API.VectorNode<T>} node
- * @param {number} index
- */
-export const deleteChild = (node, index) => {
-  delete node.arr[index]
-}
+export const cloneBranch = ({ edit, children }) =>
+  createBranch(edit, children.slice())
 
 /**
  * @template T
@@ -67,30 +64,74 @@ export const newPath = (edit, shift, node) => {
 
   while (level !== 0) {
     const embed = root
-    root = create(edit)
-    setChild(root, 0, embed)
+    root = createBranch(edit)
+    root.children[0] = embed
 
     level -= BITS
   }
 
   return root
 }
+// /**
+//  * @template T
+//  * @implements {API.VectorNode<T>}
+//  */
+// class VectorNodeView {
+//   /**
+//    *
+//    * @param {API.VectorNode<T>} node
+//    */
+//   constructor({ edit, arr }) {
+//     this.edit = edit
+//     this.arr = arr
+//   }
+// }
+
 /**
  * @template T
  * @implements {API.VectorNode<T>}
  */
-class VectorNodeView {
+class BranchNodeView {
   /**
-   *
-   * @param {API.VectorNode<T>} node
+   * @param {object} input
+   * @param {API.Edit|null} input.edit
+   * @param {API.VectorNode<T>[]} input.children
    */
-  constructor({ edit, arr }) {
+  constructor({ edit, children }) {
     this.edit = edit
-    this.arr = arr
+    this.children = children
+  }
+  /**
+   * @type {never}
+   */
+  get leaves() {
+    throw new Error("Branch nodes contain no leaves")
   }
 }
 
-const EMPTY_NODE = new VectorNodeView({
+/**
+ * @template T
+ * @implements {API.VectorNode<T>}
+ */
+class LeafNodeView {
+  /**
+   * @param {object} input
+   * @param {API.Edit|null} input.edit
+   * @param {T[]} input.leaves
+   */
+  constructor({ edit, leaves }) {
+    this.edit = edit
+    this.leaves = leaves
+  }
+  /**
+   * @type {never}
+   */
+  get children() {
+    throw new Error("Leaf nodes contain no children")
+  }
+}
+
+const EMPTY_BRANCH_NODE = createBranch({
   edit: null,
   arr: new Array(WIDTH),
 })

@@ -1,7 +1,7 @@
 import * as API from "./api.js"
 import * as Node from "./node.js"
 import { ReadonlyIndexedView } from "./sugar.js"
-import { tailOffset, unsafeArrayFor, BITS, WIDTH, MASK } from "./core.js"
+import { tailOffset, leavesFor, BITS, WIDTH, MASK } from "./core.js"
 import * as mutable from "./mutable.js"
 import { range } from "./util.js"
 
@@ -42,7 +42,7 @@ export const count = self => self.size
  */
 export const nth = (self, n, notFound = undefined) =>
   n >= 0 && n < self.size
-    ? unsafeArrayFor(self, n)[n & MASK]
+    ? leavesFor(self, n)[n & MASK]
     : /** @type {U} */ (notFound)
 
 export const get = nth
@@ -78,15 +78,15 @@ export const pop = self => {
           tail: self.tail.slice(0, self.tail.length - 1),
         })
       } else {
-        const tail = unsafeArrayFor(self, self.size - 2)
-        const root = popTail(self, self.shift, self.root) || Node.empty()
+        const tail = leavesFor(self, self.size - 2)
+        const root = popTail(self, self.shift, self.root) || Node.emptyBranch()
         const size = self.size - 1
-        if (self.shift > BITS && Node.getChild(root, 1) == null) {
+        if (self.shift > BITS && root.children[1] == null) {
           return new PersistentVectorView({
             ...self,
             size,
             shift: self.shift - BITS,
-            root: Node.getChild(root, 0),
+            root: root.children[0],
             tail,
           })
         } else {
@@ -111,21 +111,21 @@ export const pop = self => {
 const popTail = (self, level, node) => {
   const subidx = ((self.size - 2) >>> level) & MASK
   if (level > 5) {
-    const newChild = popTail(self, level - BITS, Node.getChild(node, subidx))
+    const newChild = popTail(self, level - BITS, node.children[subidx])
     if (newChild == null && subidx === 0) {
       return null
     } else {
-      const newNode = Node.clone(node)
+      const newNode = Node.cloneBranch(node)
       newChild == null
-        ? Node.deleteChild(newNode, subidx)
-        : Node.setChild(newNode, subidx, newChild)
+        ? delete newNode.children[subidx]
+        : (newNode.children[subidx] = newChild)
       return newNode
     }
   } else if (subidx === 0) {
     return null
   } else {
-    const newNode = Node.clone(node)
-    Node.deleteChild(newNode, subidx)
+    const newNode = Node.cloneBranch(node)
+    delete newNode.children[subidx]
     return newNode
   }
 }
@@ -151,7 +151,7 @@ export const conj = ({ size, shift, root, tail, ...old }, value) => {
     const newShift = rootOverflow ? shift + BITS : shift
     const newRoot = rootOverflow
       ? reRoot({ root, shift, tail })
-      : pushTail({ size: size }, shift, root, Node.create(null, tail))
+      : pushTail({ size: size }, shift, root, Node.createLeaf(null, tail))
 
     return new PersistentVectorView({
       ...old,
@@ -199,16 +199,19 @@ export const set = (self, index, value) => {
  * @param {T} value
  */
 const assoc = (self, level, node, index, value) => {
-  const newNode = Node.clone(node)
   if (level === 0) {
-    Node.setLeaf(newNode, index & MASK, value)
+    const newNode = Node.createLeaf(node)
+    newNode.leaves[index & MASK] = value
     return newNode
   } else {
+    const newNode = Node.cloneBranch(node)
     const subidx = (index >>> level) & MASK
-    Node.setChild(
-      newNode,
-      subidx,
-      assoc(self, level - BITS, Node.getChild(node, subidx), index, value)
+    newNode.children[subidx] = assoc(
+      self,
+      level - BITS,
+      node.children[subidx],
+      index,
+      value
     )
     return newNode
   }
@@ -247,9 +250,9 @@ export const equals = (self, other) => {
  * @param {number} input.shift
  */
 const reRoot = ({ root, tail, shift }) => {
-  const newRoot = Node.create(null)
-  Node.setChild(newRoot, 0, root)
-  Node.setChild(newRoot, 1, Node.newPath(null, shift, Node.create(null, tail)))
+  const newRoot = Node.createBranch(null)
+  newRoot.children[0] = root
+  newRoot.children[1] = Node.newPath(null, shift, Node.createLeaf(null, tail))
   return newRoot
 }
 
@@ -262,20 +265,20 @@ const reRoot = ({ root, tail, shift }) => {
  */
 
 const pushTail = (self, level, parent, tailNode) => {
-  let root = Node.clone(parent)
+  let root = Node.cloneBranch(parent)
   let subidx = ((self.size - 1) >>> level) & MASK
   if (level === BITS) {
-    Node.setChild(root, subidx, tailNode)
+    root.children[subidx] = tailNode
     return root
   } else {
-    const child = Node.getChild(parent, subidx)
+    const child = parent.children[subidx]
     if (child != null) {
       const nodeToInsert = pushTail(self, level - BITS, child, tailNode)
-      Node.setChild(root, subidx, nodeToInsert)
+      root.children[subidx] = nodeToInsert
       return root
     } else {
       const nodeToInsert = Node.newPath(null, level - BITS, tailNode)
-      Node.setChild(root, subidx, nodeToInsert)
+      root.children[subidx] = nodeToInsert
       return root
     }
   }
@@ -291,7 +294,7 @@ export const iterator = (self, { start = 0, end = count(self) } = {}) =>
   new RangedIteratorView({
     offset: start,
     base: start - (start % WIDTH),
-    leaf: start < count(self) ? unsafeArrayFor(self, start) : [],
+    leaf: start < count(self) ? leavesFor(self, start) : [],
     start,
     end,
     source: self,
@@ -332,14 +335,14 @@ export const from = input => {
     return new PersistentVectorView({
       size: length,
       shift: BITS,
-      root: Node.empty(),
+      root: Node.emptyBranch(),
       tail: array.slice(),
     })
   } else {
     let vec = new PersistentVectorView({
       size: 32,
       shift: BITS,
-      root: Node.empty(),
+      root: Node.emptyBranch(),
       tail: array.slice(0, 32),
     })
     let node = mutable.from(vec)
@@ -497,7 +500,7 @@ class PersistentVectorView extends ReadonlyIndexedView {
 const EMPTY = new PersistentVectorView({
   size: 0,
   shift: 5,
-  root: Node.empty(),
+  root: Node.emptyBranch(),
   tail: [],
 })
 
@@ -528,7 +531,7 @@ class RangedIteratorView {
       return { done: true, value: undefined }
     } else {
       if (this.offset - this.base === WIDTH) {
-        this.leaf = unsafeArrayFor(this.source, this.offset)
+        this.leaf = leavesFor(this.source, this.offset)
         this.base += WIDTH
       }
 

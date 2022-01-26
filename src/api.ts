@@ -11,6 +11,12 @@ export interface MutableVector<T> {
   root: VectorNode<T>
   tail: T[]
 }
+
+export interface MutableVectorView<T> extends MutableVector<T> {
+  push(value: T): MutableVectorView<T>
+  set(n: number, value: T): MutableVectorView<T>
+  pop(): MutableVectorView<T>
+}
 export interface ReadonlyIndexedView<T> {
   readonly [n: number]: T
 
@@ -43,9 +49,8 @@ export interface PersistentVectorView<T>
 export interface VectorNode<T> {
   edit: null | Edit
 
-  // children: VectorNode<T>[]
-  // leaves: T[]
-  arr: T[] | VectorNode<T>[]
+  children: VectorNode<T>[]
+  leaves: T[]
 }
 
 export interface Edit {}

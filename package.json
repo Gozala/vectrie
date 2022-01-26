@@ -25,8 +25,9 @@
   },
   "scripts": {
     "typecheck": "tsc --build",
-    "test:web": "playwright-test -r uvu test/web.spec.js",
-    "test:es": "mocha test/all.spec.js",
+    "test:web": "playwright-test test/all.spec.js",
+    "test:node": "mocha test/all.spec.js",
+    "test": "npm run test:node && npm run test:web",
     "repl": "node -i -e '(async () => Object.assign(globalThis, await import(`./.repl.js`)))()'"
   },
   "devDependencies": {
