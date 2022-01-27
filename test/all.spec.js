@@ -46,6 +46,9 @@ describe("basics", () => {
 
     assert.equal(Vec.peek(v1), 95)
     assert.equal(Vec.peek(v2), 94)
+
+    assert.equal(v1.peek(), 95)
+    assert.equal(v2.peek(), 94)
   })
 
   it("indexed access", () => {
@@ -55,6 +58,9 @@ describe("basics", () => {
       assert.equal(pv[n], n, `pv[${n}] == ${pv[n]} != ${n}`)
     }
     assert.equal(pv[98], undefined)
+
+    // @ts-expect-error - no such property
+    assert.equal(pv["third"], undefined)
   })
 
   // Ported from https://github.com/immutable-js/immutable-js/blob/main/__tests__/List.ts
@@ -128,5 +134,47 @@ describe("basics", () => {
     assert.throws(() => {
       const v = Vec.of("a", "b", "c").push("d").set(14, "o")
     }, "Index 14 is out of bounds [0, 4]")
+  })
+})
+
+describe("iteration", () => {
+  const vec = Vec.of("a", "b", "c", "d")
+  it("has keys method", () => {
+    const keys = vec.keys()
+    assert.equal(keys.next(), { value: 0, done: false })
+    assert.equal([...keys], [1, 2, 3])
+  })
+
+  it("has values method", () => {
+    const vals = vec.values()
+    assert.equal(vals.next(), { value: "a", done: false })
+
+    assert.equal([...vals], ["b", "c", "d"])
+
+    assert.equal([...vec.values({ start: 2 })], ["c", "d"])
+  })
+
+  it("has entries method", () => {
+    const entries = vec.entries()
+    assert.equal(entries.next(), { value: [0, "a"], done: false })
+
+    assert.equal(
+      [...entries],
+      [
+        [1, "b"],
+        [2, "c"],
+        [3, "d"],
+      ]
+    )
+
+    assert.equal(
+      [...vec.entries({ start: 1, end: 3 })],
+      [
+        [1, "b"],
+        [2, "c"],
+      ]
+    )
+
+    assert.equal([...vec.entries({ start: 10 })], [])
   })
 })

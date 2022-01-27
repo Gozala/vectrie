@@ -43,7 +43,11 @@ export interface PersistentVectorView<T>
 
   equals(other: PersistentVector<T>): other is PersistentVectorView<T>
 
-  values(options?: RangedIteratorOptions): IterableIterator<T>
+  values(options?: Partial<RangedIteratorOptions>): IterableIterator<T>
+  entries(
+    options?: Partial<RangedIteratorOptions>
+  ): IterableIterator<[number, T]>
+  keys(): IterableIterator<number>
 }
 
 /**

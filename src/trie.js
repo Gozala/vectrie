@@ -90,6 +90,7 @@ class BranchNodeView {
   /**
    * @type {never}
    */
+  /* c8 ignore next 3 */
   get leaves() {
     throw new Error("Branch nodes contain no leaves")
   }
@@ -112,6 +113,7 @@ class LeafNodeView {
   /**
    * @type {never}
    */
+  /* c8 ignore next 3 */
   get children() {
     throw new Error("Leaf nodes contain no children")
   }
