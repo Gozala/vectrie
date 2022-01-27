@@ -1,3 +1,6 @@
 export * from "./api.js"
 export * from "./persistent.js"
+export * from "./equality.js"
+export * from "./iteration.js"
+export * from "./lookup.js"
 export * as mutable from "./mutable.js"

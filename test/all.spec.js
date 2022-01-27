@@ -8,6 +8,16 @@ describe("basics", () => {
     assert.equal(Vec.nth(Vec.from(["a", "b", "c", "d"]), 0.1), "a")
   })
 
+  it("set in the root", () => {
+    const v1 = Vec.from(range(0, 90))
+    const v2 = Vec.set(v1, 0, -1)
+
+    assert.equal(Vec.get(v1, 0), 0)
+    assert.equal(Vec.get(v2, 0), -1)
+    assert.equal(Vec.get(v1, 1), 1)
+    assert.equal(Vec.get(v2, 1), 1)
+  })
+
   it("basic ops", () => {
     const pv = Vec.from(range(0, 97))
     assert.equal(Vec.nth(pv, 96), 96)
