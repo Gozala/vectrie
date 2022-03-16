@@ -1,6 +1,7 @@
 {
   "name": "vectrie",
   "version": "0.0.0",
+  "description": "S implementation of persistent bit-partitioned vector trie a.k.a vector data structure in Clojure",
   "keywords": [
     "typescript",
     "growable array",
@@ -11,5 +12,35 @@
     "bit partitioned",
     "vector",
     "trie"
-  ]
+  ],
+  "author": "Irakli Gozalshvili <dev@gozala.io> (https://gozala.io/work)",
+  "license": "(Apache-2.0 AND MIT)",
+  "type": "module",
+  "main": "./src/lib.js",
+  "types": "./dist/src/lib.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/lib.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --build",
+    "test:web": "playwright-test test/all.spec.js",
+    "test:node": "c8 --check-coverage --branches 100 --functions 100 --lines 100 mocha test/all.spec.js",
+    "test": "npm run test:node && npm run test:web"
+  },
+  "c8": {
+    "exclude": [
+      "test/**",
+      "src/sugar.js"
+    ]
+  },
+  "devDependencies": {
+    "c8": "^7.11.0",
+    "@types/mocha": "9.1.0",
+    "mocha": "9.2.0",
+    "playwright-test": "7.2.2",
+    "typescript": "4.5.5",
+    "uvu": "0.5.3"
+  }
 }
