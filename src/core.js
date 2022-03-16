@@ -151,6 +151,7 @@ export const setInRoot = (edit, trie, shift, index, value) => {
     parent.children[n] = node
 
     n = (index >>> level) & MASK
+    parent = node
     node = node.children[n]
   }
 

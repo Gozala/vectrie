@@ -161,30 +161,14 @@ class PersistentVectorView extends ReadonlyIndexedView {
     return clone(this)
   }
 
+  // Stack API
+
   /**
    * @param {T} value
    * @returns {API.PersistentVectorView<T>}
    */
   push(value) {
     return conj(this, value)
-  }
-
-  /**
-   * @template [U=undefined]
-   * @param {number} index
-   * @param {U} [fallback]
-   */
-  get(index, fallback) {
-    return nth(this, index, fallback)
-  }
-
-  /**
-   * @param {number} index
-   * @param {T} value
-   * @returns {API.PersistentVectorView<T>}
-   */
-  set(index, value) {
-    return set(this, index, value)
   }
   /**
    * @template [U=undefined]
@@ -196,6 +180,28 @@ class PersistentVectorView extends ReadonlyIndexedView {
 
   pop() {
     return pop(this)
+  }
+
+  // Lookup API
+
+  /**
+   * @template [U=undefined]
+   * @param {number} index
+   * @param {U} [fallback]
+   */
+  get(index, fallback) {
+    return nth(this, index, fallback)
+  }
+
+  // Associative API
+
+  /**
+   * @param {number} index
+   * @param {T} value
+   * @returns {API.PersistentVectorView<T>}
+   */
+  set(index, value) {
+    return set(this, index, value)
   }
 
   /**

@@ -12,43 +12,62 @@ export interface MutableVector<T> {
   tail: T[]
 }
 
-export interface MutableVectorView<T> extends MutableVector<T> {
-  push(value: T): MutableVectorView<T>
-  set(n: number, value: T): MutableVectorView<T>
-  pop(): MutableVectorView<T>
+export interface MutableVectorView<T>
+  extends MutableVector<T>,
+    IndexedView<T>,
+    LookupView<T>,
+    AssociativeView<T, MutableVectorView<T>>,
+    StackView<T, MutableVectorView<T>>,
+    IterableView<T> {}
+
+export interface AssociativeView<T, Self> {
+  set(n: number, value: T): Self
 }
-export interface ReadonlyIndexedView<T> {
-  readonly [n: number]: T
 
-  get(n: number): T | undefined
-}
-
-export interface PersistentVectorView<T>
-  extends PersistentVector<T>,
-    ReadonlyIndexedView<T>,
-    Iterable<T> {
-  readonly size: number
-
-  push(value: T): PersistentVectorView<T>
-  get<U = undefined>(n: number, notFound?: U): T | U
-  set(n: number, value: T): PersistentVectorView<T>
+export interface StackView<T, Self> {
+  push(value: T): Self
+  pop(): Self
 
   peek<U = undefined>(notFound?: U): T | U
+}
 
-  pop(): PersistentVectorView<T>
+export interface LookupView<T> {
+  get(n: number): T | undefined
+}
+export interface IndexedView<T> extends LookupView<T> {
+  readonly [n: number]: T
+}
 
-  clear(): PersistentVectorView<T>
-
-  clone(): PersistentVectorView<T>
-
-  equals(other: PersistentVector<T>): other is PersistentVectorView<T>
-
+export interface IterableView<T> extends Iterable<T> {
   values(options?: Partial<RangedIteratorOptions>): IterableIterator<T>
   entries(
     options?: Partial<RangedIteratorOptions>
   ): IterableIterator<[number, T]>
   keys(): IterableIterator<number>
 }
+
+export interface CloneableView<Self> {
+  clone(): Self
+}
+
+export interface EmptyableView<Self> {
+  clear(): Self
+}
+
+export interface EqualityView<Other, Self extends Other> {
+  equals(other: Other): other is Self
+}
+
+export interface PersistentVectorView<T>
+  extends PersistentVector<T>,
+    IndexedView<T>,
+    LookupView<T>,
+    AssociativeView<T, PersistentVectorView<T>>,
+    StackView<T, PersistentVectorView<T>>,
+    IterableView<T>,
+    CloneableView<PersistentVectorView<T>>,
+    EmptyableView<PersistentVectorView<T>>,
+    EqualityView<PersistentVector<T>, PersistentVectorView<T>> {}
 
 /**
  * `VectorNode` reprenests nodes of the bit-partitioned vector trie. Which may

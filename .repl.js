@@ -6,6 +6,4 @@ export * from "./src/lib.js"
 export * from "./src/util.js"
 export * from "./src/core.js"
 
-export * as Node from "./src/node.js"
-export * as persistent from "./src/persistent.js"
 export * as Vec from "./src/lib.js"

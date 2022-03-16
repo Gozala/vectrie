@@ -1,6 +1,9 @@
 import * as API from "./api.js"
 import * as Node from "./trie.js"
 import { WIDTH, conj as doconj, pop as dopop, set as doset } from "./core.js"
+import { values, entries, keys } from "./iteration.js"
+import { nth, peek } from "./lookup.js"
+import { ReadonlyIndexedView } from "./sugar.js"
 
 /**
  * @template T
@@ -10,7 +13,7 @@ import { WIDTH, conj as doconj, pop as dopop, set as doset } from "./core.js"
  */
 export const conj = (self, value) => {
   if (self.root.edit) {
-    return new MutableVectorView(doconj(self.root.edit, self, value))
+    return patch(self, doconj(self.root.edit, self, value))
   } else {
     throw new RangeError("mutable.push called after seal()")
   }
@@ -24,7 +27,7 @@ export const push = conj
  */
 export const pop = self => {
   if (self.root.edit) {
-    return new MutableVectorView(dopop(self.root.edit, self))
+    return patch(self, dopop(self.root.edit, self))
   } else {
     throw new RangeError("mutable.pop called after seal()")
   }
@@ -39,7 +42,7 @@ export const pop = self => {
  */
 export const set = (self, index, value) => {
   if (self.root.edit) {
-    return new MutableVectorView(doset(self.root.edit, self, index, value))
+    return patch(self, doset(self.root.edit, self, index, value))
   } else {
     throw new RangeError("mutable.set called after seal()")
   }
@@ -71,18 +74,36 @@ const editableTail = tail => {
 
 /**
  * @template T
- * @implements {API.MutableVectorView<T>}
+ * @template {API.MutableVector<T>} Self
+ * @param {Self} self
+ * @param {API.PersistentVector<T>} delta
  */
-class MutableVectorView {
+const patch = (self, { size, shift, root, tail }) => {
+  self.size = size
+  self.shift = shift
+  self.root = root
+  self.tail = tail
+  return self
+}
+
+/**
+ * @template T
+ * @implements {API.MutableVectorView<T>}
+ * @extends {ReadonlyIndexedView<T>}
+ */
+class MutableVectorView extends ReadonlyIndexedView {
   /**
    * @param {API.MutableVector<T>} input
    */
   constructor({ size, shift, root, tail }) {
+    super()
     this.size = size
     this.shift = shift
     this.root = root
     this.tail = tail
   }
+
+  // Stack API
 
   /**
    * @param {T} value
@@ -93,13 +114,59 @@ class MutableVectorView {
   }
 
   /**
+   * @template [U=undefined]
+   * @param {U} [fallback]
+   */
+  peek(fallback) {
+    return peek(this, fallback)
+  }
+  pop() {
+    return pop(this)
+  }
+
+  // ArrayLike API
+
+  /**
+   * @template [U=undefined]
+   * @param {number} index
+   * @param {U} [fallback]
+   */
+  get(index, fallback) {
+    return nth(this, index, fallback)
+  }
+
+  /**
    * @param {number} n
    * @param {T} value
    */
   set(n, value) {
     return set(this, n, value)
   }
-  pop() {
-    return pop(this)
+
+  // Iteraction API
+
+  get [Symbol.iterator]() {
+    return this.values
+  }
+
+  /**
+   * @param {{start?:number, end?:number}} [options]
+   */
+  values(options) {
+    return values(this, options)
+  }
+
+  /**
+   * @param {{start?:number, end?:number}} [options]
+   */
+  entries(options) {
+    return entries(this, options)
+  }
+
+  /**
+   * @returns {IterableIterator<number>}
+   */
+  keys() {
+    return keys(this)
   }
 }

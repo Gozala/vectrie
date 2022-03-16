@@ -1,15 +1,16 @@
 import * as API from "./api.js"
+
 function ReadonlyIndexedView() {}
 Object.defineProperties(ReadonlyIndexedView, {
   prototype: {
     value: new Proxy(Object.prototype, {
       /**
        * @template T
-       * @param {object} target
+       * @param {object} _target
        * @param {PropertyKey} property
-       * @param {API.ReadonlyIndexedView<T>} receiver
+       * @param {API.IndexedView<T>} receiver
        */
-      get(target, property, receiver) {
+      get(_target, property, receiver) {
         const n = parseKey(property)
         return n != null ? receiver.get(n) : undefined
       },
@@ -18,7 +19,6 @@ Object.defineProperties(ReadonlyIndexedView, {
 })
 
 /**
- *
  * @param {PropertyKey} key
  * @returns {number|null}
  */

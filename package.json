@@ -32,7 +32,8 @@
   },
   "c8": {
     "exclude": [
-      "test/**"
+      "test/**",
+      "src/sugar.js"
     ]
   },
   "devDependencies": {
