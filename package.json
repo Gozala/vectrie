@@ -1,7 +1,7 @@
 {
   "name": "vectrie",
   "version": "1.0.0",
-  "description": "S implementation of persistent bit-partitioned vector trie a.k.a vector data structure in Clojure",
+  "description": "JS implementation of persistent bit-partitioned vector trie a.k.a vector data structure in Clojure",
   "keywords": [
     "typescript",
     "growable array",
