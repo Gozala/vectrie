@@ -136,6 +136,13 @@ describe("persistent API", () => {
         const v = Vec.of("a", "b", "c").push("d").set(14, "o")
       }, "Index 14 is out of bounds [0, 4]")
     })
+
+    it("can be cleared with Vec.clear", () => {
+      const vec = Vec.of("a", "b", "c")
+      assert.equal(Vec.clear(vec), Vec.empty())
+      assert.equal(vec.clear(), Vec.empty())
+      assert.equal([...vec], ["a", "b", "c"])
+    })
   })
 
   describe("pop", () => {
